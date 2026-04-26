@@ -19,22 +19,26 @@ Scope {
         }
 
         exclusiveZone: 0
-        implicitWidth: 420
-        implicitHeight: 700
+        implicitWidth: 460
+        implicitHeight: 880
 
         WlrLayershell.namespace: "quickshell:centerDashboard"
         WlrLayershell.layer: WlrLayer.Overlay
         WlrLayershell.keyboardFocus: GlobalStates.dashboardOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         color: "transparent"
 
-        anchors.top: true
-        anchors.bottom: true  
-        anchors.left: true
-        anchors.right: true
-        anchors.topMargin: (screen.height - implicitHeight) / 2
-        anchors.bottomMargin: (screen.height - implicitHeight) / 2
-        anchors.leftMargin: (screen.width - implicitWidth) / 2
-        anchors.rightMargin: (screen.width - implicitWidth) / 2
+        anchors {
+            top: true
+            bottom: true
+            left: true
+            right: true
+        }
+        margins {
+            top: (screen.height - implicitHeight) / 2
+            bottom: (screen.height - implicitHeight) / 2
+            left: (screen.width - implicitWidth) / 2
+            right: (screen.width - implicitWidth) / 2
+        }
 
         onVisibleChanged: {
             if (visible) {
@@ -53,13 +57,8 @@ Scope {
         Loader {
             id: dashboardContentLoader
             active: GlobalStates.dashboardOpen || false
-            anchors {
-                fill: parent
-                margins: Appearance.sizes.hyprlandGapsOut
-                leftMargin: Appearance.sizes.elevationMargin
-            }
-            width: 420 - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
-            height: parent.height - Appearance.sizes.hyprlandGapsOut * 2
+            anchors.fill: parent
+            anchors.margins: Appearance.sizes.hyprlandGapsOut
 
             focus: GlobalStates.dashboardOpen
             Keys.onPressed: event => {
