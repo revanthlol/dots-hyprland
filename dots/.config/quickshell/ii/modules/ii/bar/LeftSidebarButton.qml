@@ -28,13 +28,6 @@ RippleButton {
         GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
     }
 
-    Connections {
-        target: Ai
-        function onResponseFinished() {
-            if (GlobalStates.dashboardOpen) return;
-            root.showPing = true;
-        }
-    }
 
     Connections {
         target: GlobalStates

@@ -33,10 +33,10 @@ Scope {
 
                 Timer {
                     id: showBarTimer
-                    interval: (Config?.options.bar.autoHide.showWhenPressingSuper.delay ?? 100)
+                    interval: barRoot.superShow ? 700 : (Config?.options.bar.autoHide.showWhenPressingSuper.delay ?? 100)
                     repeat: false
                     onTriggered: {
-                        barRoot.superShow = true
+                        barRoot.superShow = false
                     }
                 }
                 Connections {
@@ -47,6 +47,17 @@ Scope {
                         else {
                             showBarTimer.stop();
                             barRoot.superShow = false;
+                        }
+                    }
+                }
+
+                Connections {
+                    target: Hyprland
+                    function onRawEvent(event) {
+                        if (event.name === "workspace" || event.name === "workspacev2") {
+                            if (!Config?.options.bar.autoHide.enable) return;
+                            barRoot.superShow = true;
+                            showBarTimer.restart();
                         }
                     }
                 }
