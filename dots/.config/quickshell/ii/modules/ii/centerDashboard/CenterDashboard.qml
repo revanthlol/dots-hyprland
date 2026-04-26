@@ -19,8 +19,8 @@ Scope {
         }
 
         exclusiveZone: 0
-        implicitWidth: 460
-        implicitHeight: 880
+        implicitWidth: 720
+        implicitHeight: screen.height
 
         WlrLayershell.namespace: "quickshell:centerDashboard"
         WlrLayershell.layer: WlrLayer.Overlay

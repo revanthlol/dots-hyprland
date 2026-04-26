@@ -8,20 +8,21 @@ ContentPage {
     forceWidth: true
 
     ContentSection {
-        icon: "neurology"
-        title: Translation.tr("AI")
+        icon: "memory"
+        title: Translation.tr("Resources")
 
-        MaterialTextArea {
-            Layout.fillWidth: true
-            placeholderText: Translation.tr("System prompt")
-            text: Config.options.ai.systemPrompt
-            wrapMode: TextEdit.Wrap
-            onTextChanged: {
-                Qt.callLater(() => {
-                    Config.options.ai.systemPrompt = text;
-                });
+        ConfigSpinBox {
+            icon: "av_timer"
+            text: Translation.tr("Polling interval (ms)")
+            value: Config.options.resources.updateInterval
+            from: 100
+            to: 10000
+            stepSize: 100
+            onValueChanged: {
+                Config.options.resources.updateInterval = value;
             }
         }
+        
     }
 
     ContentSection {
@@ -50,39 +51,6 @@ ContentPage {
                 Config.options.musicRecognition.interval = value;
             }
         }
-    }
-
-    ContentSection {
-        icon: "cell_tower"
-        title: Translation.tr("Networking")
-
-        MaterialTextArea {
-            Layout.fillWidth: true
-            placeholderText: Translation.tr("User agent (for services that require it)")
-            text: Config.options.networking.userAgent
-            wrapMode: TextEdit.Wrap
-            onTextChanged: {
-                Config.options.networking.userAgent = text;
-            }
-        }
-    }
-
-    ContentSection {
-        icon: "memory"
-        title: Translation.tr("Resources")
-
-        ConfigSpinBox {
-            icon: "av_timer"
-            text: Translation.tr("Polling interval (ms)")
-            value: Config.options.resources.updateInterval
-            from: 100
-            to: 10000
-            stepSize: 100
-            onValueChanged: {
-                Config.options.resources.updateInterval = value;
-            }
-        }
-        
     }
 
     ContentSection {
@@ -199,79 +167,6 @@ ContentPage {
                 onTextChanged: {
                     Config.options.search.engineBaseUrl = text;
                 }
-            }
-        }
-    }
-
-    // There's no update indicator in ii for now so we shouldn't show this yet
-    // ContentSection {
-    //     icon: "deployed_code_update"
-    //     title: Translation.tr("System updates (Arch only)")
-
-    //     ConfigSwitch {
-    //         text: Translation.tr("Enable update checks")
-    //         checked: Config.options.updates.enableCheck
-    //         onCheckedChanged: {
-    //             Config.options.updates.enableCheck = checked;
-    //         }
-    //     }
-
-    //     ConfigSpinBox {
-    //         icon: "av_timer"
-    //         text: Translation.tr("Check interval (mins)")
-    //         value: Config.options.updates.checkInterval
-    //         from: 60
-    //         to: 1440
-    //         stepSize: 60
-    //         onValueChanged: {
-    //             Config.options.updates.checkInterval = value;
-    //         }
-    //     }
-    // }
-
-    ContentSection {
-        icon: "weather_mix"
-        title: Translation.tr("Weather")
-        ConfigRow {
-            ConfigSwitch {
-                buttonIcon: "assistant_navigation"
-                text: Translation.tr("Enable GPS based location")
-                checked: Config.options.bar.weather.enableGPS
-                onCheckedChanged: {
-                    Config.options.bar.weather.enableGPS = checked;
-                }
-            }
-            ConfigSwitch {
-                buttonIcon: "thermometer"
-                text: Translation.tr("Fahrenheit unit")
-                checked: Config.options.bar.weather.useUSCS
-                onCheckedChanged: {
-                    Config.options.bar.weather.useUSCS = checked;
-                }
-                StyledToolTip {
-                    text: Translation.tr("It may take a few seconds to update")
-                }
-            }
-        }
-        
-        MaterialTextArea {
-            Layout.fillWidth: true
-            placeholderText: Translation.tr("City name")
-            text: Config.options.bar.weather.city
-            wrapMode: TextEdit.Wrap
-            onTextChanged: {
-                Config.options.bar.weather.city = text;
-            }
-        }
-        ConfigSpinBox {
-            icon: "av_timer"
-            text: Translation.tr("Polling interval (m)")
-            value: Config.options.bar.weather.fetchInterval
-            from: 5
-            to: 50
-            stepSize: 5
-            onValueChanged: {
-                Config.options.bar.weather.fetchInterval = value;
             }
         }
     }

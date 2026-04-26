@@ -50,9 +50,9 @@ ApplicationWindow {
             component: "modules/settings/InterfaceConfig.qml"
         },
         {
-            name: Translation.tr("Services"),
-            icon: "settings",
-            component: "modules/settings/ServicesConfig.qml"
+            name: Translation.tr("System"),
+            icon: "tune",
+            component: "modules/settings/SystemConfig.qml"
         },
         {
             name: Translation.tr("Advanced"),

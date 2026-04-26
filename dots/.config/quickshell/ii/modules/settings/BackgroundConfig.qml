@@ -283,17 +283,7 @@ ContentPage {
             visible: settingsClock.cookiePresent
             title: Translation.tr("Cookie clock settings")
 
-            ConfigSwitch {
-                buttonIcon: "wand_stars"
-                text: Translation.tr("Auto styling with Gemini")
-                checked: Config.options.background.widgets.clock.cookie.aiStyling
-                onCheckedChanged: {
-                    Config.options.background.widgets.clock.cookie.aiStyling = checked;
-                }
-                StyledToolTip {
-                    text: Translation.tr("Uses Gemini to categorize the wallpaper then picks a preset based on it.\nYou'll need to set Gemini API key on the left sidebar first.\nImages are downscaled for performance, but just to be safe,\ndo not select wallpapers with sensitive information.")
-                }
-            }
+
 
             ConfigSwitch {
                 buttonIcon: "airwave"
@@ -569,49 +559,4 @@ ContentPage {
         }
     }
 
-    ContentSection {
-        icon: "weather_mix"
-        title: Translation.tr("Widget: Weather")
-
-        ConfigRow {
-            Layout.fillWidth: true
-
-            ConfigSwitch {
-                Layout.fillWidth: false
-                buttonIcon: "check"
-                text: Translation.tr("Enable")
-                checked: Config.options.background.widgets.weather.enable
-                onCheckedChanged: {
-                    Config.options.background.widgets.weather.enable = checked;
-                }
-            }
-            Item {
-                Layout.fillWidth: true
-            }
-            ConfigSelectionArray {
-                Layout.fillWidth: false
-                currentValue: Config.options.background.widgets.weather.placementStrategy
-                onSelected: newValue => {
-                    Config.options.background.widgets.weather.placementStrategy = newValue;
-                }
-                options: [
-                    {
-                        displayName: Translation.tr("Draggable"),
-                        icon: "drag_pan",
-                        value: "free"
-                    },
-                    {
-                        displayName: Translation.tr("Least busy"),
-                        icon: "category",
-                        value: "leastBusy"
-                    },
-                    {
-                        displayName: Translation.tr("Most busy"),
-                        icon: "shapes",
-                        value: "mostBusy"
-                    },
-                ]
-            }
-        }
-    }
 }

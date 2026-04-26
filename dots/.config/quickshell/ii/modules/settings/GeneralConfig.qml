@@ -1,6 +1,6 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
+
 import QtQuick.Layouts
 import qs.services
 import qs.modules.common
@@ -10,11 +10,7 @@ import qs.modules.common.widgets
 ContentPage {
     forceWidth: true
 
-    Process {
-        id: translationProc
-        property string locale: ""
-        command: [Directories.aiTranslationScriptPath, translationProc.locale]
-    }
+
 
     ContentSection {
         icon: "volume_up"
@@ -164,103 +160,10 @@ ContentPage {
                 }
             }
         }
-        ContentSubsection {
-            title: Translation.tr("Generate translation with Gemini")
-            tooltip: Translation.tr("You'll need to enter your Gemini API key first.\nType /key on the sidebar for instructions.")
 
-            ConfigRow {
-                MaterialTextArea {
-                    id: localeInput
-                    Layout.fillWidth: true
-                    placeholderText: Translation.tr("Locale code, e.g. fr_FR, de_DE, zh_CN...")
-                    text: Config.options.language.ui === "auto" ? Qt.locale().name : Config.options.language.ui
-                }
-                RippleButtonWithIcon {
-                    id: generateTranslationBtn
-                    Layout.fillHeight: true
-                    nerdIcon: ""
-                    enabled: !translationProc.running || (translationProc.locale !== localeInput.text.trim())
-                    mainText: enabled ? Translation.tr("Generate\nTypically takes 2 minutes") : Translation.tr("Generating...\nDon't close this window!")
-                    onClicked: {
-                        translationProc.locale = localeInput.text.trim();
-                        translationProc.running = false;
-                        translationProc.running = true;
-                    }
-                }
-            }
-        }
     }
 
-    ContentSection {
-        icon: "rule"
-        title: Translation.tr("Policies")
 
-        ConfigRow {
-
-            // AI policy
-            ColumnLayout {
-                ContentSubsectionLabel {
-                    text: Translation.tr("AI")
-                }
-
-                ConfigSelectionArray {
-                    currentValue: Config.options.policies.ai
-                    onSelected: newValue => {
-                        Config.options.policies.ai = newValue;
-                    }
-                    options: [
-                        {
-                            displayName: Translation.tr("No"),
-                            icon: "close",
-                            value: 0
-                        },
-                        {
-                            displayName: Translation.tr("Yes"),
-                            icon: "check",
-                            value: 1
-                        },
-                        {
-                            displayName: Translation.tr("Local only"),
-                            icon: "sync_saved_locally",
-                            value: 2
-                        }
-                    ]
-                }
-            }
-
-            // Weeb policy
-            ColumnLayout {
-
-                ContentSubsectionLabel {
-                    text: Translation.tr("Weeb")
-                }
-
-                ConfigSelectionArray {
-                    currentValue: Config.options.policies.weeb
-                    onSelected: newValue => {
-                        Config.options.policies.weeb = newValue;
-                    }
-                    options: [
-                        {
-                            displayName: Translation.tr("No"),
-                            icon: "close",
-                            value: 0
-                        },
-                        {
-                            displayName: Translation.tr("Yes"),
-                            icon: "check",
-                            value: 1
-                        },
-                        {
-                            displayName: Translation.tr("Closet"),
-                            icon: "ev_shadow",
-                            value: 2
-                        }
-                    ]
-                }
-            }
-        }
-    }
 
     ContentSection {
         icon: "notification_sound"
@@ -275,14 +178,7 @@ ContentPage {
                     Config.options.sounds.battery = checked;
                 }
             }
-            ConfigSwitch {
-                buttonIcon: "av_timer"
-                text: Translation.tr("Pomodoro")
-                checked: Config.options.sounds.pomodoro
-                onCheckedChanged: {
-                    Config.options.sounds.pomodoro = checked;
-                }
-            }
+
         }
     }
 

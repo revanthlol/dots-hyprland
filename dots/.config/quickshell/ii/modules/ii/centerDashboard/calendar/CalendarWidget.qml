@@ -38,7 +38,8 @@ Item {
 
     ColumnLayout {
         id: calendarColumn
-        anchors.centerIn: parent
+        anchors.top: parent.top
+        anchors.horizontalCenter: parent.horizontalCenter
         spacing: 5
 
         // Calendar header

@@ -8,6 +8,10 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Bluetooth
 import Quickshell.Hyprland
+import Quickshell.Services.Mpris
+import qs.modules.ii.centerDashboard.calendar
+import qs.modules.common.functions
+
 
 import qs.modules.ii.centerDashboard.quickToggles
 import qs.modules.ii.centerDashboard.quickToggles.classicStyle
@@ -71,6 +75,31 @@ Item {
                 Layout.bottomMargin: 0
             }
 
+            // Big clock
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: false
+                implicitHeight: clockColumn.implicitHeight + 16
+                Column {
+                    id: clockColumn
+                    anchors.centerIn: parent
+                    spacing: 2
+                    StyledText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        font.pixelSize: 48
+                        font.weight: Font.Light
+                        color: Appearance.colors.colOnLayer0
+                        text: DateTime.timeWithSeconds
+                    }
+                    StyledText {
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colSubtext
+                        text: DateTime.longDate
+                    }
+                }
+            }
+
             Loader {
                 id: slidersLoader
                 Layout.fillWidth: true
@@ -96,17 +125,266 @@ Item {
                 }
             }
 
+            // Notifications
             CenterWidgetGroup {
                 Layout.alignment: Qt.AlignHCenter
                 Layout.fillHeight: true
                 Layout.fillWidth: true
             }
 
-            BottomWidgetGroup {
-                Layout.alignment: Qt.AlignHCenter
-                Layout.fillHeight: false
+            // Shared accordion header
+            Rectangle {
                 Layout.fillWidth: true
-                Layout.preferredHeight: implicitHeight
+                implicitHeight: accordionRow.implicitHeight + 12
+                color: Appearance.colors.colLayer1
+                radius: Appearance.rounding.normal
+
+                property bool collapsed: Persistent.states.sidebar.bottomGroup.collapsed
+
+                RowLayout {
+                    id: accordionRow
+                    anchors.fill: parent
+                    anchors.margins: 6
+
+                    CalendarHeaderButton {
+                        forceCircle: true
+                        downAction: () => {
+                            Persistent.states.sidebar.bottomGroup.collapsed = !Persistent.states.sidebar.bottomGroup.collapsed
+                        }
+                        contentItem: MaterialSymbol {
+                            text: Persistent.states.sidebar.bottomGroup.collapsed ? "keyboard_arrow_down" : "keyboard_arrow_up"
+                            iconSize: Appearance.font.pixelSize.larger
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Appearance.colors.colOnLayer1
+                        }
+                    }
+                    StyledText {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 8
+                        text: Persistent.states.sidebar.bottomGroup.collapsed ? DateTime.collapsedCalendarFormat : Translation.tr("Player & Calendar")
+                        font.pixelSize: Appearance.font.pixelSize.normal
+                        color: Appearance.colors.colOnLayer1
+                    }
+                }
+            }
+
+            // Player + Calendar row (collapsible)
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: Persistent.states.sidebar.bottomGroup.collapsed ? 0 : bottomRow.implicitHeight
+                clip: true
+                visible: implicitHeight > 0
+
+                Behavior on implicitHeight {
+                    NumberAnimation {
+                        duration: Appearance.animation.elementMove.duration
+                        easing.type: Appearance.animation.elementMove.type
+                        easing.bezierCurve: Appearance.animation.elementMove.bezierCurve
+                    }
+                }
+
+                RowLayout {
+                    id: bottomRow
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    spacing: sidebarPadding
+                    implicitHeight: Math.max(playerCard.implicitHeight, calendarCard.implicitHeight)
+
+                    // Player — vertical iPhone style
+                    Rectangle {
+                        id: playerCard
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        implicitHeight: 350
+                        radius: Appearance.rounding.normal
+                        color: Appearance.colors.colLayer1
+                        clip: true
+
+                        Timer {
+                            running: MprisController.activePlayer?.isPlaying ?? false
+                            interval: 1000
+                            repeat: true
+                            onTriggered: {
+                                if (MprisController.activePlayer)
+                                    MprisController.activePlayer.positionChanged()
+                            }
+                        }
+
+
+
+                        ColumnLayout {
+                            anchors.fill: parent
+                            spacing: 0
+                            visible: MprisController.activePlayer !== null
+
+                            // Cover art — top half
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 160
+                                color: Appearance.colors.colLayer2
+                                clip: true
+
+                                Item {
+                                    anchors.fill: parent
+                                    Image {
+                                        id: coverArtImage
+                                        anchors.fill: parent
+                                        source: MprisController.activePlayer?.trackArtUrl ?? ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        cache: true
+                                        asynchronous: true
+                                        Behavior on source {
+                                            enabled: false
+                                        }
+                                        opacity: status === Image.Ready ? 1 : 0
+                                        Behavior on opacity {
+                                            NumberAnimation { duration: 200 }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Track info + controls — bottom half
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                Layout.margins: 10
+                                spacing: 6
+
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    font.pixelSize: Appearance.font.pixelSize.normal
+                                    font.weight: Font.Medium
+                                    color: Appearance.colors.colOnLayer0
+                                    elide: Text.ElideRight
+                                    text: MprisController.activePlayer?.trackTitle ?? "Untitled"
+                                }
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colSubtext
+                                    elide: Text.ElideRight
+                                    text: MprisController.activePlayer?.trackArtist ?? ""
+                                }
+
+                                // Progress bar
+                                Item {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 20
+
+                                    Loader {
+                                        anchors.fill: parent
+                                        active: MprisController.activePlayer?.canSeek ?? false
+                                        sourceComponent: StyledSlider {
+                                            configuration: StyledSlider.Configuration.Wavy
+                                            highlightColor: Appearance.colors.colPrimary
+                                            trackColor: Appearance.colors.colSecondaryContainer
+                                            handleColor: Appearance.colors.colPrimary
+                                            value: (MprisController.activePlayer?.position ?? 0) / (MprisController.activePlayer?.length ?? 1)
+                                            onMoved: {
+                                                if (MprisController.activePlayer)
+                                                    MprisController.activePlayer.position = value * MprisController.activePlayer.length
+                                            }
+                                        }
+                                    }
+
+                                    Loader {
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        active: !(MprisController.activePlayer?.canSeek ?? false)
+                                        sourceComponent: StyledProgressBar {
+                                            wavy: MprisController.activePlayer?.isPlaying ?? false
+                                            highlightColor: Appearance.colors.colPrimary
+                                            trackColor: Appearance.colors.colSecondaryContainer
+                                            value: (MprisController.activePlayer?.position ?? 0) / (MprisController.activePlayer?.length ?? 1)
+                                        }
+                                    }
+                                }
+
+                                // Position text
+                                StyledText {
+                                    Layout.fillWidth: true
+                                    font.pixelSize: Appearance.font.pixelSize.smaller
+                                    color: Appearance.colors.colSubtext
+                                    text: `${StringUtils.friendlyTimeForSeconds(MprisController.activePlayer?.position ?? 0)} / ${StringUtils.friendlyTimeForSeconds(MprisController.activePlayer?.length ?? 0)}`
+                                }
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 8
+                                    RippleButton {
+                                        implicitWidth: 32; implicitHeight: 32
+                                        buttonRadius: 16
+                                        colBackground: Appearance.colors.colSecondaryContainer
+                                        colBackgroundHover: Appearance.colors.colSecondaryContainerHover
+                                        colRipple: Appearance.colors.colSecondaryContainerActive
+                                        downAction: () => MprisController.activePlayer?.previous()
+                                        contentItem: MaterialSymbol {
+                                            text: "skip_previous"
+                                            iconSize: Appearance.font.pixelSize.larger
+                                            horizontalAlignment: Text.AlignHCenter
+                                            color: Appearance.colors.colOnLayer0
+                                        }
+                                    }
+                                    RippleButton {
+                                        Layout.fillWidth: true
+                                        implicitHeight: 32
+                                        buttonRadius: Appearance.rounding.normal
+                                        colBackground: Appearance.colors.colPrimary
+                                        colBackgroundHover: Appearance.colors.colPrimaryHover
+                                        colRipple: Appearance.colors.colPrimaryActive
+                                        downAction: () => MprisController.activePlayer?.togglePlaying()
+                                        contentItem: MaterialSymbol {
+                                            text: MprisController.activePlayer?.isPlaying ? "pause" : "play_arrow"
+                                            iconSize: Appearance.font.pixelSize.larger
+                                            horizontalAlignment: Text.AlignHCenter
+                                            color: Appearance.colors.colOnPrimary
+                                        }
+                                    }
+                                    RippleButton {
+                                        implicitWidth: 32; implicitHeight: 32
+                                        buttonRadius: 16
+                                        colBackground: Appearance.colors.colSecondaryContainer
+                                        colBackgroundHover: Appearance.colors.colSecondaryContainerHover
+                                        colRipple: Appearance.colors.colSecondaryContainerActive
+                                        downAction: () => MprisController.activePlayer?.next()
+                                        contentItem: MaterialSymbol {
+                                            text: "skip_next"
+                                            iconSize: Appearance.font.pixelSize.larger
+                                            horizontalAlignment: Text.AlignHCenter
+                                            color: Appearance.colors.colOnLayer0
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // No player placeholder
+                        StyledText {
+                            anchors.centerIn: parent
+                            visible: MprisController.activePlayer === null
+                            text: Translation.tr("No active player")
+                            color: Appearance.colors.colSubtext
+                            font.pixelSize: Appearance.font.pixelSize.small
+                        }
+                    }
+
+                    // Calendar
+                    Rectangle {
+                        id: calendarCard
+                        Layout.fillWidth: true
+                        Layout.preferredWidth: 1
+                        implicitHeight: 350
+                        radius: Appearance.rounding.normal
+                        color: Appearance.colors.colLayer1
+                        clip: true
+
+                        CalendarWidget {
+                            anchors.fill: parent
+                            anchors.margins: 8
+                        }
+                    }
+                }
             }
         }
     }
