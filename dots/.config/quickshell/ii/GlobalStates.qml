@@ -11,9 +11,7 @@ Singleton {
     id: root
     property bool barOpen: true
     property bool crosshairOpen: false
-    property bool sidebarLeftOpen: false
-    property bool sidebarRightOpen: false
-    property bool mediaControlsOpen: false
+    property bool dashboardOpen: false
     property bool osdBrightnessOpen: false
     property bool osdVolumeOpen: false
     property bool oskOpen: false
@@ -31,8 +29,8 @@ Singleton {
     property bool wallpaperSelectorOpen: false
     property bool workspaceShowNumbers: false
 
-    onSidebarRightOpenChanged: {
-        if (GlobalStates.sidebarRightOpen) {
+    onDashboardOpenChanged: {
+        if (GlobalStates.dashboardOpen) {
             Notifications.timeoutAll();
             Notifications.markAllRead();
         }

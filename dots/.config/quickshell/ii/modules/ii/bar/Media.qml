@@ -37,7 +37,7 @@ Item {
             } else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) {
                 activePlayer.next();
             } else if (event.button === Qt.LeftButton) {
-                GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+                GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen
             }
         }
     }

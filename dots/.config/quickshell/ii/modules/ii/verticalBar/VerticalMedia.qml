@@ -37,7 +37,7 @@ MouseArea {
         } else if (event.button === Qt.ForwardButton || event.button === Qt.RightButton) {
             activePlayer.next();
         } else if (event.button === Qt.LeftButton) {
-            GlobalStates.mediaControlsOpen = !GlobalStates.mediaControlsOpen
+            GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen
         }
     }
 
@@ -68,7 +68,7 @@ MouseArea {
 
     Bar.StyledPopup {
         hoverTarget: root
-        active: GlobalStates.mediaControlsOpen ? false : root.containsMouse
+        active: GlobalStates.dashboardOpen ? false : root.containsMouse
 
         Column {
             anchors.centerIn: parent

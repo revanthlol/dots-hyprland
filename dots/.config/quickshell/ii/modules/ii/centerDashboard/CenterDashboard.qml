@@ -1,0 +1,115 @@
+import qs
+import qs.services
+import qs.modules.common
+import QtQuick
+import Quickshell.Io
+import Quickshell
+import Quickshell.Wayland
+import Quickshell.Hyprland
+
+Scope {
+    id: root
+
+    PanelWindow {
+        id: panelWindow
+        visible: GlobalStates.dashboardOpen
+
+        function hide() {
+            GlobalStates.dashboardOpen = false;
+        }
+
+        exclusiveZone: 0
+        implicitWidth: 420
+        implicitHeight: 700
+
+        WlrLayershell.namespace: "quickshell:centerDashboard"
+        WlrLayershell.layer: WlrLayer.Overlay
+        WlrLayershell.keyboardFocus: GlobalStates.dashboardOpen ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
+        color: "transparent"
+
+        anchors.top: true
+        anchors.bottom: true  
+        anchors.left: true
+        anchors.right: true
+        anchors.topMargin: (screen.height - implicitHeight) / 2
+        anchors.bottomMargin: (screen.height - implicitHeight) / 2
+        anchors.leftMargin: (screen.width - implicitWidth) / 2
+        anchors.rightMargin: (screen.width - implicitWidth) / 2
+
+        onVisibleChanged: {
+            if (visible) {
+                GlobalFocusGrab.addDismissable(panelWindow);
+            } else {
+                GlobalFocusGrab.removeDismissable(panelWindow);
+            }
+        }
+        Connections {
+            target: GlobalFocusGrab
+            function onDismissed() {
+                panelWindow.hide();
+            }
+        }
+
+        Loader {
+            id: dashboardContentLoader
+            active: GlobalStates.dashboardOpen || false
+            anchors {
+                fill: parent
+                margins: Appearance.sizes.hyprlandGapsOut
+                leftMargin: Appearance.sizes.elevationMargin
+            }
+            width: 420 - Appearance.sizes.hyprlandGapsOut - Appearance.sizes.elevationMargin
+            height: parent.height - Appearance.sizes.hyprlandGapsOut * 2
+
+            focus: GlobalStates.dashboardOpen
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Escape) {
+                    panelWindow.hide();
+                }
+            }
+
+            sourceComponent: CenterDashboardContent {}
+        }
+    }
+
+    IpcHandler {
+        target: "dashboard"
+
+        function toggle(): void {
+            GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
+        }
+
+        function close(): void {
+            GlobalStates.dashboardOpen = false;
+        }
+
+        function open(): void {
+            GlobalStates.dashboardOpen = true;
+        }
+    }
+
+    GlobalShortcut {
+        name: "dashboardToggle"
+        description: "Toggles dashboard on press"
+
+        onPressed: {
+            GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
+        }
+    }
+    GlobalShortcut {
+        name: "dashboardOpen"
+        description: "Opens dashboard on press"
+
+        onPressed: {
+            GlobalStates.dashboardOpen = true;
+        }
+    }
+    GlobalShortcut {
+        name: "dashboardClose"
+        description: "Closes dashboard on press"
+
+        onPressed: {
+            GlobalStates.dashboardOpen = false;
+        }
+    }
+}

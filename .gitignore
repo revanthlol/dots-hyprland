@@ -1,17 +1,10 @@
-/diagnose.result
-/cache
-
-# Ignore Python cache files
-__pycache__/
-*.py[cod]
-
-/dots/.config/quickshell/ii/.qmlls.ini
-
-# exp-update
-/.update-lock
-
-# custom os-release
-/os-release
-
-# Emacs auto backup file
-*~
+cache/
+*.old
+*.bak
+*.new
+sdata/dist-fedora/
+sdata/dist-gentoo/
+sdata/dist-nix/
+dots-extra/emacs/
+dots-extra/fcitx5/
+dots-extra/swaylock/

@@ -9,4 +9,5 @@ depends=(
   hyprland
   hyprsunset
   wl-clipboard
+  swww
 )

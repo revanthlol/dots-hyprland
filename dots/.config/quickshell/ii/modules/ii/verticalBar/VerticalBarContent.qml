@@ -59,7 +59,7 @@ Item { // Bar content region
         onMovedAway: GlobalStates.osdBrightnessOpen = false
         onPressed: event => {
             if (event.button === Qt.LeftButton)
-                GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen;
+                GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
         }
 
         ColumnLayout { // Content
@@ -169,7 +169,7 @@ Item { // Bar content region
         onMovedAway: GlobalStates.osdVolumeOpen = false;
         onPressed: event => {
             if (event.button === Qt.LeftButton) {
-                GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
             }
         }
 
@@ -207,7 +207,7 @@ Item { // Bar content region
                 colBackgroundToggled: Appearance.colors.colSecondaryContainer
                 colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
                 colRippleToggled: Appearance.colors.colSecondaryContainerActive
-                toggled: GlobalStates.sidebarRightOpen
+                toggled: GlobalStates.dashboardOpen
                 property color colText: toggled ? Appearance.m3colors.m3onSecondaryContainer : Appearance.colors.colOnLayer0
 
                 Behavior on colText {
@@ -215,7 +215,7 @@ Item { // Bar content region
                 }
 
                 onPressed: {
-                    GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen;
+                    GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
                 }
 
                 ColumnLayout {

@@ -152,8 +152,7 @@ Variants {
                         usedFraction = fraction;
                     }
                     if (Config.options.background.parallax.enableSidebar) {
-                        let sidebarFraction = bgRoot.parallaxRation / bgRoot.workspaceChunkSize / 2;
-                        usedFraction += (sidebarFraction * GlobalStates.sidebarRightOpen - sidebarFraction * GlobalStates.sidebarLeftOpen);
+                        usedFraction += 0;
                     }
                     return Math.max(0, Math.min(1, usedFraction));
                 }

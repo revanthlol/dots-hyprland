@@ -25,16 +25,14 @@ ShellRoot {
     Component.onCompleted: {
         MaterialThemeLoader.reapplyTheme()
         Hyprsunset.load()
-        FirstRunExperience.load()
         ConflictKiller.load()
         Cliphist.refresh()
         Wallpapers.load()
-        Updates.load()
     }
 
 
     // Panel families
-    property list<string> families: ["ii", "waffle"]
+    property list<string> families: ["ii"]
     function cyclePanelFamily() {
         const currentIndex = families.indexOf(Config.options.panelFamily)
         const nextIndex = (currentIndex + 1) % families.length
@@ -51,12 +49,6 @@ ShellRoot {
         identifier: "ii"
         component: IllogicalImpulseFamily {}
     }
-
-    PanelFamilyLoader {
-        identifier: "waffle"
-        component: WaffleFamily {}
-    }
-
 
     // Shortcuts
     IpcHandler {

@@ -92,15 +92,26 @@ install-local-pkgbuild() {
 # Install core dependencies from the meta-packages
 metapkgs=(./sdata/dist-arch/illogical-impulse-{audio,backlight,basic,fonts-themes,kde,portal,python,screencapture,toolkit,widgets})
 metapkgs+=(./sdata/dist-arch/illogical-impulse-hyprland)
-metapkgs+=(./sdata/dist-arch/illogical-impulse-microtex-git)
 metapkgs+=(./sdata/dist-arch/illogical-impulse-quickshell-git)
-metapkgs+=(./sdata/dist-arch/illogical-impulse-bibata-modern-classic-bin)
 
 for i in "${metapkgs[@]}"; do
   metainstallflags="--needed"
   $ask && showfun install-local-pkgbuild || metainstallflags="$metainstallflags --noconfirm"
   v install-local-pkgbuild "$i" "$metainstallflags"
 done
+
+metainstallflags="--needed"
+$ask || metainstallflags="$metainstallflags --noconfirm"
+if $ask; then
+  echo -e "${STY_YELLOW}Install microtex (LaTeX rendering)? Requires a heavy build. [y/N]${STY_RST}"
+  read -p "====> " p
+  case $p in
+    y) v install-local-pkgbuild "./sdata/dist-arch/illogical-impulse-microtex-git" "$metainstallflags" ;;
+    *) echo "Skipping microtex" ;;
+  esac
+else
+  v install-local-pkgbuild "./sdata/dist-arch/illogical-impulse-microtex-git" "$metainstallflags"
+fi
 
 ## Optional dependencies
 if pacman -Qs ^plasma-browser-integration$ ;then SKIP_PLASMAINTG=true;fi
