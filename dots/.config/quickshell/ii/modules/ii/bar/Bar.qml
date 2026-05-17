@@ -97,6 +97,7 @@ Scope {
                 MouseArea  {
                     id: hoverRegion
                     hoverEnabled: true
+                    acceptedButtons: Qt.NoButton
                     anchors {
                         fill: parent
                         rightMargin: (Config.options.interactions.deadPixelWorkaround.enable && barRoot.anchors.right) * 1

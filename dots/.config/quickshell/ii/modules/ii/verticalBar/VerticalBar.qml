@@ -85,6 +85,7 @@ Scope {
                 MouseArea  {
                     id: hoverRegion
                     hoverEnabled: true
+                    acceptedButtons: Qt.NoButton
                     anchors.fill: parent
 
                     Item {
