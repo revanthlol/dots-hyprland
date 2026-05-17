@@ -17,27 +17,17 @@ symlink_config() {
 }
 
 # MISC configs (kitty, rofi, matugen, etc — everything except qs/fish/hypr)
-for i in $(find dots/.config/ -mindepth 1 -maxdepth 1 \
+for i in $(find "${DOTS}/" -mindepth 1 -maxdepth 1 \
   ! -name 'quickshell' ! -name 'fish' ! -name 'hypr' \
   -exec basename {} \;); do
-  symlink_config "$REPO_ROOT/dots/.config/$i" "$XDG_CONFIG_HOME/$i"
+  symlink_config "$DOTS/$i" "$XDG_CONFIG_HOME/$i"
 done
 
 # Quickshell
-symlink_config "$REPO_ROOT/dots/.config/quickshell" "$XDG_CONFIG_HOME/quickshell"
+symlink_config "$DOTS/quickshell" "$XDG_CONFIG_HOME/quickshell"
 
 # Fish
-symlink_config "$REPO_ROOT/dots/.config/fish" "$XDG_CONFIG_HOME/fish"
+symlink_config "$DOTS/fish" "$XDG_CONFIG_HOME/fish"
 
 # Hyprland
-symlink_config "$REPO_ROOT/dots/.config/hypr/hyprland" "$XDG_CONFIG_HOME/hypr/hyprland"
-symlink_config "$REPO_ROOT/dots/.config/hypr/hyprland.conf" "$XDG_CONFIG_HOME/hypr/hyprland.conf"
-symlink_config "$REPO_ROOT/dots/.config/hypr/hyprlock.conf" "$XDG_CONFIG_HOME/hypr/hyprlock.conf"
-symlink_config "$REPO_ROOT/dots/.config/hypr/hypridle.conf" "$XDG_CONFIG_HOME/hypr/hypridle.conf"
-symlink_config "$REPO_ROOT/dots/.config/hypr/monitors.conf" "$XDG_CONFIG_HOME/hypr/monitors.conf"
-symlink_config "$REPO_ROOT/dots/.config/hypr/workspaces.conf" "$XDG_CONFIG_HOME/hypr/workspaces.conf"
-
-# Custom hypr (don't overwrite if exists — user edits live here)
-if [ ! -e "$XDG_CONFIG_HOME/hypr/custom" ]; then
-  symlink_config "$REPO_ROOT/dots/.config/hypr/custom" "$XDG_CONFIG_HOME/hypr/custom"
-fi
+symlink_config "$DOTS/hypr" "$XDG_CONFIG_HOME/hypr"

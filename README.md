@@ -2,6 +2,8 @@
 
 A minimal, custom Hyprland rice forked from [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) and stripped down.
 
+The active Hyprland config now lives under `dots/` and uses the Lua-based Hyprland layout.
+
 **Stack:** Hyprland · Quickshell (QML) · Kitty · Fish · Matugen · Rofi · swww · cliphist
 
 ## Install

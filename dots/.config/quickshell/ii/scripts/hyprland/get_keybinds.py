@@ -1,222 +1,351 @@
-#!/usr/bin/env -S\_/bin/sh\_-c\_"source\_\$(eval\_echo\_\$ILLOGICAL_IMPULSE_VIRTUAL_ENV)/bin/activate&&exec\_python\_-E\_"\$0"\_"\$@""
+#!/usr/bin/env python3
 import argparse
-import re
+import ast
+import json
 import os
-from os.path import expandvars as os_expandvars
-from typing import Dict, List
+import re
+import subprocess
+import tempfile
+from pathlib import Path
 
-TITLE_REGEX = "#+!"
-HIDE_COMMENT = "[hidden]"
-MOD_SEPARATORS = ['+', ' ']
-COMMENT_BIND_PATTERN = "#/#"
 
-parser = argparse.ArgumentParser(description='Hyprland keybind reader')
-parser.add_argument('--path', type=str, default="$HOME/.config/hypr/hyprland.conf", help='path to keybind file (sourcing isn\'t supported)')
-args = parser.parse_args()
-content_lines = []
-reading_line = 0
-
-# Little Parser made for hyprland keybindings conf file
-Variables: Dict[str, str] = {}
+MOD_NORMALIZATION = {
+    "SUPER": "Super",
+    "CTRL": "Ctrl",
+    "ALT": "Alt",
+    "SHIFT": "Shift",
+    "SUPER_L": "Super_L",
+    "SUPER_R": "Super_R",
+    "SPACE": "Space",
+    "TAB": "Tab",
+    "RETURN": "Return",
+    "DELETE": "Delete",
+    "BACKSPACE": "BackSpace",
+    "ESCAPE": "Escape",
+    "SEMICOLON": "Semicolon",
+    "APOSTROPHE": "Apostrophe",
+    "PERIOD": "Period",
+    "SLASH": "Slash",
+    "BACKSLASH": "Backslash",
+    "HASH": "Hash",
+    "MINUS": "Minus",
+    "EQUAL": "Equal",
+}
 
 
 class KeyBinding(dict):
-    def __init__(self, mods, key, dispatcher, params, comment) -> None:
+    def __init__(self, mods, key, comment) -> None:
         self["mods"] = mods
         self["key"] = key
-        self["dispatcher"] = dispatcher
-        self["params"] = params
         self["comment"] = comment
 
+
 class Section(dict):
-    def __init__(self, children, keybinds, name) -> None:
-        self["children"] = children
-        self["keybinds"] = keybinds
+    def __init__(self, name="") -> None:
+        self["children"] = []
+        self["keybinds"] = []
         self["name"] = name
 
 
 def read_content(path: str) -> str:
-    if (not os.access(os.path.expanduser(os.path.expandvars(path)), os.R_OK)):
-        return ("error")
-    with open(os.path.expanduser(os.path.expandvars(path)), "r") as file:
+    resolved = os.path.expanduser(os.path.expandvars(path))
+    if not os.access(resolved, os.R_OK):
+        return "error"
+    with open(resolved, "r", encoding="utf-8") as file:
         return file.read()
 
 
-def autogenerate_comment(dispatcher: str, params: str = "") -> str:
-    match dispatcher:
+def normalize_token(token: str) -> str:
+    token = token.strip()
+    upper = token.upper()
+    return MOD_NORMALIZATION.get(upper, token)
 
-        case "resizewindow":
-            return "Resize window"
 
-        case "movewindow":
-            if(params == ""):
-                return "Move window"
-            else:
-                return "Window: move in {} direction".format({
-                    "l": "left",
-                    "r": "right",
-                    "u": "up",
-                    "d": "down",
-                }.get(params, "null"))
+def split_combo(combo: str):
+    parts = [part.strip() for part in combo.split("+") if part.strip()]
+    if not parts:
+        return [], ""
+    if len(parts) == 1:
+        return [], normalize_token(parts[0])
+    mods = [normalize_token(part) for part in parts[:-1]]
+    key = normalize_token(parts[-1])
+    return mods, key
 
-        case "pin":
-            return "Window: pin (show on all workspaces)"
 
-        case "splitratio":
-            return "Window split ratio {}".format(params)
+def extract_bind_block(lines, start_index):
+    block_lines = [lines[start_index]]
+    depth = balance_delta(lines[start_index])
+    index = start_index
+    while depth > 0 and index + 1 < len(lines):
+        index += 1
+        block_lines.append(lines[index])
+        depth += balance_delta(lines[index])
+    return "\n".join(block_lines), index
 
-        case "togglefloating":
-            return "Float/unfloat window"
 
-        case "resizeactive":
-            return "Resize window by {}".format(params)
+def balance_delta(text: str) -> int:
+    depth = 0
+    in_string = None
+    escape = False
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        nxt = text[i + 1] if i + 1 < len(text) else ""
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == in_string:
+                in_string = None
+        else:
+            if ch == "-" and nxt == "-":
+                break
+            if ch in ("'", '"'):
+                in_string = ch
+            elif ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+        i += 1
+    return depth
 
-        case "killactive":
-            return "Close window"
 
-        case "fullscreen":
-            return "Toggle {}".format(
-                {
-                    "0": "fullscreen",
-                    "1": "maximization",
-                    "2": "fullscreen on Hyprland's side",
-                }.get(params, "null")
-            )
+def run_lua_capture(target_path: Path):
+    base_dir = target_path.parent
+    lua_script = f"""
+local target = arg[1]
+local base_dir = target:match("(.+)/[^/]+$") or "."
+package.path = table.concat({{
+  base_dir .. "/?.lua",
+  base_dir .. "/?/init.lua",
+  package.path,
+}}, ";")
+package.preload["hyprland.lib"] = function() return {{}} end
+package.preload["hyprland/lib"] = function() return {{}} end
 
-        case "fakefullscreen":
-            return "Toggle fake fullscreen"
+local bindings = {{}}
 
-        case "workspace":
-            if params == "+1":
-                return "Workspace: focus right"
-            elif params == "-1":
-                return "Workspace: focus left"
-            return "Focus workspace {}".format(params)
+local function proxy()
+  return setmetatable({{}}, {{
+    __index = function()
+      return function(...)
+        return proxy()
+      end
+    end,
+  }})
+end
 
-        case "movefocus":
-            return "Window: move focus {}".format(
-                {
-                    "l": "left",
-                    "r": "right",
-                    "u": "up",
-                    "d": "down",
-                }.get(params, "null")
-            )
+hl = {{}}
+hl.dsp = setmetatable({{
+  global = function(...) return proxy() end,
+  exec_cmd = function(...) return proxy() end,
+  layout = function(...) return proxy() end,
+  focus = function(...) return proxy() end,
+  monitor = function(...) return proxy() end,
+  gesture = function(...) return proxy() end,
+  cursor = proxy(),
+  window = setmetatable({{}}, {{
+    __index = function()
+      return function(...) return proxy() end
+    end,
+  }}),
+  workspace = setmetatable({{}}, {{
+    __index = function()
+      return function(...) return proxy() end
+    end,
+  }}),
+}}, {{
+  __index = function()
+    return function(...) return proxy() end
+  end,
+}})
 
-        case "swapwindow":
-            return "Window: swap in {} direction".format(
-                {
-                    "l": "left",
-                    "r": "right",
-                    "u": "up",
-                    "d": "down",
-                }.get(params, "null")
-            )
+function hl.bind(combo, _action, opts)
+  local description = ""
+  if type(opts) == "table" and opts.description ~= nil then
+    description = tostring(opts.description)
+  end
+  table.insert(bindings, {{ combo = tostring(combo), description = description }})
+end
 
-        case "movetoworkspace":
-            if params == "+1":
-                return "Window: move to right workspace (non-silent)"
-            elif params == "-1":
-                return "Window: move to left workspace (non-silent)"
-            return "Window: move to workspace {} (non-silent)".format(params)
+function hl.config(...) end
+function hl.curve(...) end
+function hl.animation(...) end
+function hl.monitor(...) end
+function hl.gesture(...) end
+function hl.window_rule(...) end
+function hl.layer_rule(...) end
+function hl.workspace_rule(...) end
+function hl.exec_cmd(...) end
+function hl.dispatch(...) end
+function hl.define_submap(_name, fn)
+  if type(fn) == "function" then
+    pcall(fn)
+  end
+end
+function hl.env(...) end
+function hl.get_config(...) return 0 end
+function hl.get_current_submap() return "" end
+function hl.get_active_workspace() return {{ id = 1 }} end
+hl.notification = {{ create = function(...) end }}
 
-        case "movetoworkspacesilent":
-            if params == "+1":
-                return "Window: move to right workspace"
-            elif params == "-1":
-                return "Window: move to right workspace"
-            return "Window: move to workspace {}".format(params)
+HOME = os.getenv("HOME") or ""
+function is_file_exists(_path) return false end
+function create_if_not_exists(_path) return false end
+function workspace_in_group(i) return i end
 
-        case "togglespecialworkspace":
-            return "Workspace: toggle special"
+function hl.on(_event, fn)
+  if type(fn) == "function" then
+    pcall(fn)
+  end
+end
 
-        case "exec":
-            return "Execute: {}".format(params)
+local ok, err = pcall(dofile, target)
+if not ok then
+  io.stderr:write(err .. "\\n")
+  os.exit(1)
+end
 
-        case _:
-            return ""
+for _, item in ipairs(bindings) do
+  print(string.format("%q\\t%q", item.combo or "", item.description or ""))
+end
+"""
 
-def get_keybind_at_line(line_number, line_start = 0):
-    global content_lines
-    line = content_lines[line_number]
-    _, keys = line.split("=", 1)
-    keys, *comment = keys.split("#", 1)
+    with tempfile.NamedTemporaryFile("w", suffix=".lua", delete=False) as lua_file:
+        lua_file.write(lua_script)
+        lua_path = lua_file.name
 
-    mods, key, dispatcher, *params = list(map(str.strip, keys.split(",", 4)))
-    params = "".join(map(str.strip, params))
+    try:
+        proc = subprocess.run(
+            ["lua5.4", lua_path, str(target_path)],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    finally:
+        os.unlink(lua_path)
 
-    # Remove empty spaces
-    comment = list(map(str.strip, comment))
-    # Add comment if it exists, else generate it
-    if comment:
-        comment = comment[0]
-        if comment.startswith("[hidden]"):
+    bindings = []
+    for line in proc.stdout.splitlines():
+        if "\t" not in line:
+            continue
+        combo_q, desc_q = line.split("\t", 1)
+        combo = ast.literal_eval(combo_q)
+        description = ast.literal_eval(desc_q)
+        bindings.append({"combo": combo, "description": description})
+    return bindings
+
+
+def source_files_for(target_path: Path):
+    if target_path.name == "hyprland.lua":
+        base_dir = target_path.parent
+        files = [base_dir / "hyprland" / "keybinds.lua"]
+        custom_file = base_dir / "custom" / "keybinds.lua"
+        if custom_file.exists():
+            files.append(custom_file)
+        return files
+    return [target_path]
+
+
+def add_bind_to_section(section, binding):
+    mods, key = split_combo(binding["combo"])
+    comment = binding["description"] if binding["description"] else binding["combo"]
+    section["keybinds"].append(KeyBinding(mods, key, comment))
+
+
+def parse_bind_sources(source_paths, bindings):
+    root = Section("")
+    bind_index = 0
+
+    def next_binding():
+        nonlocal bind_index
+        if bind_index >= len(bindings):
             return None
-    else:
-        comment = autogenerate_comment(dispatcher, params)
+        item = bindings[bind_index]
+        bind_index += 1
+        return item
 
-    if mods:
-        modstring = mods + MOD_SEPARATORS[0] # Add separator at end to ensure last mod is read
-        mods = []
-        p = 0
-        for index, char in enumerate(modstring):
-            if(char in MOD_SEPARATORS):
-                if(index - p > 1):
-                    mods.append(modstring[p:index])
-                p = index+1
-    else:
-        mods = []
+    for source_path in source_paths:
+        content = read_content(str(source_path))
+        if content == "error":
+            continue
 
-    return KeyBinding(mods, key, dispatcher, params, comment)
+        lines = content.splitlines()
+        if source_path.name == "keybinds.lua" and source_path.parent.name == "hyprland":
+            current_root = Section("Shell")
+            root["children"].append(current_root)
+            stack = [(0, root), (1, current_root)]
+        else:
+            current_root = Section("Custom")
+            root["children"].append(current_root)
+            stack = [(0, root), (1, current_root)]
 
-def get_binds_recursive(current_content, scope):
-    global content_lines
-    global reading_line
-    # print("get_binds_recursive({0}, {1}) [@L{2}]".format(current_content, scope, reading_line + 1))
-    while reading_line < len(content_lines): # TODO: Adjust condition
-        line = content_lines[reading_line]
-        heading_search_result = re.search(TITLE_REGEX, line)
-        # print("Read line {0}: {1}\tisHeading: {2}".format(reading_line + 1, content_lines[reading_line], "[{0}, {1}, {2}]".format(heading_search_result.start(), heading_search_result.start() == 0, ((heading_search_result != None) and (heading_search_result.start() == 0))) if heading_search_result != None else "No"))
-        if ((heading_search_result != None) and (heading_search_result.start() == 0)): # Found title
-            # Determine scope
-            heading_scope = line.find('!')
-            # Lower? Return
-            if(heading_scope <= scope):
-                reading_line -= 1
-                return current_content
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.strip()
 
-            section_name = line[(heading_scope+1):].strip()
-            # print("[[ Found h{0} at line {1} ]] {2}".format(heading_scope, reading_line+1, content_lines[reading_line]))
-            reading_line += 1
-            current_content["children"].append(get_binds_recursive(Section([], [], section_name), heading_scope))
+            heading = re.match(r"^\s*--\s*(#+)!+\s*(.*)$", line)
+            if heading:
+                level = max(len(heading.group(1)) - 1, 1)
+                name = heading.group(2).strip()
+                if not name:
+                    i += 1
+                    continue
+                while len(stack) > 1 and stack[-1][0] >= level:
+                    stack.pop()
+                parent = stack[-1][1]
+                section = Section(name)
+                parent["children"].append(section)
+                stack.append((level, section))
+                i += 1
+                continue
 
-        elif line.startswith(COMMENT_BIND_PATTERN):
-            keybind = get_keybind_at_line(reading_line, line_start=len(COMMENT_BIND_PATTERN))
-            if(keybind != None):
-                current_content["keybinds"].append(keybind)
+            subsection = re.match(r"^\s*--\s*#\s+(?!/)(.*\S)\s*$", line)
+            if subsection:
+                name = subsection.group(1).strip()
+                if not name:
+                    i += 1
+                    continue
+                while len(stack) > 1 and stack[-1][0] >= 2:
+                    stack.pop()
+                parent = stack[-1][1]
+                section = Section(name)
+                parent["children"].append(section)
+                stack.append((2, section))
+                i += 1
+                continue
 
-        elif line == "" or not line.lstrip().startswith("bind"): # Comment, ignore
-            pass
+            if stripped.startswith("hl.bind("):
+                _, end_index = extract_bind_block(lines, i)
+                binding = next_binding()
+                if binding is not None:
+                    add_bind_to_section(stack[-1][1], binding)
+                i = end_index + 1
+                continue
 
-        else: # Normal keybind
-            keybind = get_keybind_at_line(reading_line)
-            if(keybind != None):
-                current_content["keybinds"].append(keybind)
+            i += 1
 
-        reading_line += 1
+    return root
 
-    return current_content;
 
-def parse_keys(path: str) -> Dict[str, List[KeyBinding]]:
-    global content_lines
-    content_lines = read_content(path).splitlines()
-    if content_lines[0] == "error":
-        return "error"
-    return get_binds_recursive(Section([], [], ""), 0)
+def parse_file(path: str):
+    target_path = Path(os.path.expanduser(os.path.expandvars(path))).resolve()
+    if not target_path.exists():
+        return {"children": []}
+
+    bindings = run_lua_capture(target_path)
+    source_paths = source_files_for(target_path)
+    return parse_bind_sources(source_paths, bindings)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Parse Hyprland Lua keybind files.")
+    parser.add_argument("--path", type=str, required=True, help="Path to a Lua Hyprland config entrypoint.")
+    args = parser.parse_args()
+    print(json.dumps(parse_file(args.path)))
 
 
 if __name__ == "__main__":
-    import json
-
-    ParsedKeys = parse_keys(args.path)
-    print(json.dumps(ParsedKeys))
+    main()

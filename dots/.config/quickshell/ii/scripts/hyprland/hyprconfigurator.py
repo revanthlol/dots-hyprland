@@ -81,7 +81,7 @@ def edit_hyprland_config(file_path, set_args, reset_args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Edit a Hyprland config file.")
-    parser.add_argument("--file", default="~/.config/hypr/hyprland.conf", help="Path to the Hyprland config file (default: ~/.config/hypr/hyprland.conf).")
+    parser.add_argument("--file", default="~/.config/hypr/hyprland.lua", help="Path to the Hyprland config file (default: ~/.config/hypr/hyprland.lua).")
     
     parser.add_argument("--set", nargs=2, action="append", metavar=("KEY", "VALUE"), help="Set a configuration key to a value.")
     parser.add_argument("--reset", action="append", metavar="KEY", help="Remove a configuration key.")

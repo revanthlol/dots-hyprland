@@ -118,7 +118,7 @@ Tips:
 - `dolphin`
   - Used in Hyprland and Quickshell config.
 - `systemsettings`
-  - Used in Hyprland `keybinds.conf`.
+  - Used in Hyprland `keybinds.lua`.
 
 
 ## illogical-impulse-portal
@@ -149,7 +149,7 @@ Tips:
 
 ## illogical-impulse-screencapture
 - `hyprshot`
-  - Used in Hyprland `keybinds.conf` as fallback.
+  - Used in Hyprland `keybinds.lua` as fallback.
 - `slurp`
   - Used in Hyprland and Quickshell config.
 - `swappy`

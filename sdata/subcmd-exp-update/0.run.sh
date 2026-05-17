@@ -18,7 +18,7 @@
 # exp-update.sh - Enhanced dotfiles update script
 #
 # Features:
-# - Auto-detect repository structure (dots/ prefix or direct config)
+# - Auto-detect repository structure (dots/ or direct config)
 # - Pull latest commits from remote
 # - Rebuild packages if PKGBUILD files changed (user choice)
 # - Handle config file conflicts with user choices
@@ -60,7 +60,7 @@ declare -A CREATED_DIRS
 detect_repo_structure() {
   local found_dirs=()
   
-  # Check for dots/ prefixed structure
+  # Check for prefixed structure
   if [[ -d "${REPO_ROOT}/dots/.config" ]]; then
     found_dirs+=("dots/.config")
     [[ -d "${REPO_ROOT}/dots/.local/bin" ]] && found_dirs+=("dots/.local/bin")
@@ -1039,7 +1039,7 @@ if [[ "$process_files" == true ]]; then
       continue
     fi
     
-    # FIX: Properly handle dots/ prefix mapping
+    # FIX: Properly handle prefixed structure mapping
     if [[ "$dir_name" == dots/* ]]; then
       # Strip "dots/" prefix for home directory mapping
       home_subdir="${dir_name#dots/}"
