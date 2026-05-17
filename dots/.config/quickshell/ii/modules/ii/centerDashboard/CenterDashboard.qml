@@ -67,7 +67,19 @@ Scope {
                 }
             }
 
-            sourceComponent: CenterDashboardContent {}
+            sourceComponent: Item {
+                anchors.fill: parent
+                property real entryOffset: Math.max(56, Appearance.sizes.hyprlandGapsOut * 2)
+                y: GlobalStates.dashboardOpen ? 0 : (Config.options.bar.bottom ? entryOffset : -entryOffset)
+
+                Behavior on y {
+                    animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+                }
+
+                CenterDashboardContent {
+                    anchors.fill: parent
+                }
+            }
         }
     }
 
