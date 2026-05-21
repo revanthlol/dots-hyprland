@@ -158,7 +158,7 @@ Tips:
   - Used in Quickshell and Hyprland config.
 - `tesseract-data-eng`
   - Used as data for tesseract.
-- `wf-recorder`
+- `gpu-screen-recorder`
   - Used in Quickshell config.
 
 

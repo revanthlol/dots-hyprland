@@ -209,6 +209,7 @@ Singleton {
         property int full: 9999
         property int screenRounding: large
         property int windowRounding: 18
+        property int barRounding: 12
     }
 
     font: QtObject {

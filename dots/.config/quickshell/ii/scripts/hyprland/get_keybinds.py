@@ -112,10 +112,10 @@ def balance_delta(text: str) -> int:
 
 
 def run_lua_capture(target_path: Path):
-    base_dir = target_path.parent
+    base_dir = target_path.parent.parent if target_path.parent.name == "hyprland" else target_path.parent
     lua_script = f"""
 local target = arg[1]
-local base_dir = target:match("(.+)/[^/]+$") or "."
+local base_dir = {json.dumps(str(base_dir))}
 package.path = table.concat({{
   base_dir .. "/?.lua",
   base_dir .. "/?/init.lua",

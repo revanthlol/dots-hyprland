@@ -9,10 +9,11 @@ import Quickshell.Hyprland
 
 Scope {
     id: root
+    property bool reveal: false
 
     PanelWindow {
         id: panelWindow
-        visible: GlobalStates.dashboardOpen
+        visible: false
 
         function hide() {
             GlobalStates.dashboardOpen = false;
@@ -40,13 +41,33 @@ Scope {
             right: (screen.width - implicitWidth) / 2
         }
 
-        onVisibleChanged: {
-            if (visible) {
-                GlobalFocusGrab.addDismissable(panelWindow);
-            } else {
-                GlobalFocusGrab.removeDismissable(panelWindow);
+        function showAnimated() {
+            visible = true;
+            root.reveal = false;
+            openAnimationTimer.restart();
+        }
+
+        function hideAnimated() {
+            root.reveal = false;
+            closeAnimationTimer.restart();
+        }
+
+        Timer {
+            id: openAnimationTimer
+            interval: 32
+            repeat: false
+            onTriggered: root.reveal = true
+        }
+
+        Timer {
+            id: closeAnimationTimer
+            interval: Appearance.animation.elementMove.duration
+            repeat: false
+            onTriggered: {
+                panelWindow.visible = false;
             }
         }
+
         Connections {
             target: GlobalFocusGrab
             function onDismissed() {
@@ -54,9 +75,23 @@ Scope {
             }
         }
 
+        Connections {
+            target: GlobalStates
+            function onDashboardOpenChanged() {
+                if (GlobalStates.dashboardOpen) {
+                    closeAnimationTimer.stop();
+                    panelWindow.showAnimated();
+                    GlobalFocusGrab.addDismissable(panelWindow);
+                } else {
+                    GlobalFocusGrab.removeDismissable(panelWindow);
+                    panelWindow.hideAnimated();
+                }
+            }
+        }
+
         Loader {
             id: dashboardContentLoader
-            active: GlobalStates.dashboardOpen || false
+            active: true
             anchors.fill: parent
             anchors.margins: Appearance.sizes.hyprlandGapsOut
 
@@ -67,17 +102,20 @@ Scope {
                 }
             }
 
-            sourceComponent: Item {
-                anchors.fill: parent
-                property real entryOffset: Math.max(56, Appearance.sizes.hyprlandGapsOut * 2)
-                y: GlobalStates.dashboardOpen ? 0 : (Config.options.bar.bottom ? entryOffset : -entryOffset)
+            sourceComponent: CenterDashboardContent {
+                property real entryOffset: Math.max(72, Appearance.sizes.barHeight + Appearance.sizes.hyprlandGapsOut * 2)
+                y: root.reveal ? 0 : (Config.options.bar.bottom ? entryOffset : -entryOffset)
+                opacity: root.reveal ? 1 : 0
+                scale: root.reveal ? 1 : 0.985
 
                 Behavior on y {
-                    animation: Appearance.animation.elementMove.numberAnimation.createObject(this)
+                    animation: Appearance.animation.elementMoveEnter.numberAnimation.createObject(this)
                 }
-
-                CenterDashboardContent {
-                    anchors.fill: parent
+                Behavior on opacity {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
+                }
+                Behavior on scale {
+                    animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                 }
             }
         }

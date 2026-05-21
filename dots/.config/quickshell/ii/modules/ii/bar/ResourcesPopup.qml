@@ -85,8 +85,52 @@ StyledPopup {
                 spacing: 4
                 StyledPopupValueRow {
                     icon: "bolt"
-                    label: Translation.tr("Load:")
-                    value: `${Math.round(ResourceUsage.cpuUsage * 100)}%`
+                    label: Translation.tr("Usage:")
+                    value: ResourceUsage.cpuUsageString
+                }
+                StyledPopupValueRow {
+                    icon: "developer_board"
+                    label: Translation.tr("Cores:")
+                    value: `${ResourceUsage.cpuCores || "--"}C / ${ResourceUsage.cpuThreads || "--"}T`
+                }
+                StyledPopupValueRow {
+                    icon: "monitoring"
+                    label: Translation.tr("Load 1m:")
+                    value: ResourceUsage.loadAverageOneMinuteString
+                }
+            }
+        }
+
+        Column {
+            anchors.top: parent.top
+            spacing: 8
+
+            StyledPopupHeaderRow {
+                icon: Network.materialSymbol
+                label: Network.ethernet ? "LAN" : "Wi-Fi"
+            }
+            Column {
+                spacing: 4
+                StyledPopupValueRow {
+                    icon: "download"
+                    label: Translation.tr("Down:")
+                    value: Network.formatRate(Network.downloadBytesPerSecond)
+                }
+                StyledPopupValueRow {
+                    icon: "upload"
+                    label: Translation.tr("Up:")
+                    value: Network.formatRate(Network.uploadBytesPerSecond)
+                }
+                StyledPopupValueRow {
+                    icon: "router"
+                    label: Translation.tr("SSID:")
+                    value: Network.networkName || Translation.tr("Disconnected")
+                }
+                StyledPopupValueRow {
+                    visible: Network.wifi
+                    icon: "network_wifi"
+                    label: Translation.tr("Signal:")
+                    value: `${Network.networkStrength || 0}%`
                 }
             }
         }

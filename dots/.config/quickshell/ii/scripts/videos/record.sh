@@ -7,7 +7,7 @@ CUSTOM_PATH=$(jq -r "$JSON_PATH" "$CONFIG_FILE" 2>/dev/null)
 
 RECORDING_DIR=""
 
-if [[ -n "$CUSTOM_PATH" ]]; then
+if [[ -n "$CUSTOM_PATH" && "$CUSTOM_PATH" != "null" ]]; then
     RECORDING_DIR="$CUSTOM_PATH"
 else
     RECORDING_DIR="$HOME/Videos" # Use default path
@@ -17,10 +17,19 @@ getdate() {
     date '+%Y-%m-%d_%H.%M.%S'
 }
 getaudiooutput() {
-    pactl list sources | grep 'Name' | grep 'monitor' | cut -d ' ' -f2
+    pactl list sources | grep 'Name' | grep 'monitor' | cut -d ' ' -f2 | head -n1
 }
 getactivemonitor() {
     hyprctl monitors -j | jq -r '.[] | select(.focused == true) | .name'
+}
+slurp_to_gsr_region() {
+    awk -F '[, x]' '{ printf "%sx%s+%s+%s", $3, $4, $1, $2 }' <<< "$1"
+}
+recorder_is_running() {
+    pgrep -f '(^|/)gpu-screen-recorder( |$)' >/dev/null
+}
+stop_recorder() {
+    pkill -INT -f '(^|/)gpu-screen-recorder( |$)'
 }
 
 mkdir -p "$RECORDING_DIR"
@@ -46,17 +55,19 @@ for ((i=0;i<${#ARGS[@]};i++)); do
     fi
 done
 
-if pgrep wf-recorder > /dev/null; then
+if recorder_is_running; then
     notify-send "Recording Stopped" "Stopped" -a 'Recorder' &
-    pkill wf-recorder &
+    stop_recorder &
 else
+    filename='./recording_'"$(getdate)"'.mp4'
+    args=(-c mp4 -f 60 -q very_high -tune quality -cursor yes -o "$filename")
+    if [[ $SOUND_FLAG -eq 1 ]]; then
+        args+=(-a "$(getaudiooutput)")
+    fi
+
     if [[ $FULLSCREEN_FLAG -eq 1 ]]; then
-        notify-send "Starting recording" 'recording_'"$(getdate)"'.mp4' -a 'Recorder' & disown
-        if [[ $SOUND_FLAG -eq 1 ]]; then
-            wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --audio="$(getaudiooutput)"
-        else
-            wf-recorder -o "$(getactivemonitor)" --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t
-        fi
+        notify-send "Starting recording" "$filename" -a 'Recorder' & disown
+        gpu-screen-recorder -w "$(getactivemonitor)" "${args[@]}"
     else
         # If a manual region was provided via --region, use it; otherwise run slurp as before.
         if [[ -n "$MANUAL_REGION" ]]; then
@@ -68,11 +79,7 @@ else
             fi
         fi
 
-        notify-send "Starting recording" 'recording_'"$(getdate)"'.mp4' -a 'Recorder' & disown
-        if [[ $SOUND_FLAG -eq 1 ]]; then
-            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --geometry "$region" --audio="$(getaudiooutput)"
-        else
-            wf-recorder --pixel-format yuv420p -f './recording_'"$(getdate)"'.mp4' -t --geometry "$region"
-        fi
+        notify-send "Starting recording" "$filename" -a 'Recorder' & disown
+        gpu-screen-recorder -w region -region "$(slurp_to_gsr_region "$region")" "${args[@]}"
     fi
 fi

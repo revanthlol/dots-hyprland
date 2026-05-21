@@ -11,7 +11,7 @@ symlink_config() {
     mv "$dst" "$dst.bak"
     printf "${STY_YELLOW}Backed up existing $dst to $dst.bak${STY_RST}\n"
   fi
-  ln -sfn "$src" "$dst"
+  ln -sfnT "$src" "$dst"
   printf "${STY_GREEN}Linked: $dst -> $src${STY_RST}\n"
   realpath -se "$dst" >> "${INSTALLED_LISTFILE}"
 }

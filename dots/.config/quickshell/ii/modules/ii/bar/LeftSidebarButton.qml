@@ -9,9 +9,7 @@ RippleButton {
 
     property bool showPing: false
 
-    property bool translatorEnabled: Config.options.sidebar.translator.enable
-    property bool animeEnabled: Config.options.policies.weeb !== 0
-    visible: translatorEnabled || animeEnabled
+    visible: true
 
     property real buttonPadding: 5
     implicitWidth: distroIcon.width + buttonPadding * 2
@@ -25,7 +23,8 @@ RippleButton {
     toggled: GlobalStates.dashboardOpen
 
     onPressed: {
-        GlobalStates.dashboardOpen = !GlobalStates.dashboardOpen;
+        // Placeholder launcher hook. Keep the button wired while the target action is undecided.
+        console.log("Arch launcher placeholder clicked");
     }
 
 
@@ -41,7 +40,7 @@ RippleButton {
         anchors.centerIn: parent
         width: 19.5
         height: 19.5
-        source: Config.options.bar.topLeftIcon == 'distro' ? SystemInfo.distroIcon : `${Config.options.bar.topLeftIcon}-symbolic`
+        source: "arch-symbolic"
         colorize: true
         color: Appearance.colors.colOnLayer0
 

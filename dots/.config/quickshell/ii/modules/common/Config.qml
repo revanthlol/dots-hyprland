@@ -518,7 +518,12 @@ Singleton {
                             { "size": 1, "type": "idleInhibitor" },
                             { "size": 1, "type": "mic" },
                             { "size": 2, "type": "audio" },
-                            { "size": 2, "type": "nightLight" }
+                            { "size": 2, "type": "nightLight" },
+                            { "size": 1, "type": "screenSnip" },
+                            { "size": 1, "type": "screenRecord" },
+                            { "size": 1, "type": "colorPicker" },
+                            { "size": 1, "type": "onScreenKeyboard" },
+                            { "size": 1, "type": "powerProfile" }
                         ]
                     }
                 }

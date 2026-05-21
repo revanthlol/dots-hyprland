@@ -8,6 +8,7 @@ RowLayout {
     required property string icon
     required property string label
     required property string value
+    property real valueMaximumWidth: -1
     spacing: 4
 
     MaterialSymbol {
@@ -21,9 +22,11 @@ RowLayout {
     }
     StyledText {
         Layout.fillWidth: true
+        Layout.maximumWidth: root.valueMaximumWidth > 0 ? root.valueMaximumWidth : 100000
         horizontalAlignment: Text.AlignRight
         visible: root.value !== ""
         color: Appearance.colors.colOnSurfaceVariant
         text: root.value
+        elide: Text.ElideRight
     }
 }

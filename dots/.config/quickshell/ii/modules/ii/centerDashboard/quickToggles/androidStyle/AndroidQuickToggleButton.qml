@@ -70,7 +70,7 @@ GroupButton {
 
     onClicked: {
         if (root.expandedSize && root.altAction) root.altAction();
-        else root.mainAction();
+        else if (root.mainAction) root.mainAction();
     }
 
     contentItem: RowLayout {
@@ -96,7 +96,9 @@ GroupButton {
             implicitWidth: iconBackground.implicitWidth
             cursorShape: Qt.PointingHandCursor
 
-            onClicked: root.mainAction()
+            onClicked: {
+                if (root.mainAction) root.mainAction();
+            }
 
             Rectangle {
                 id: iconBackground

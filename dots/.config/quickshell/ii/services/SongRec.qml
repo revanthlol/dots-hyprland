@@ -23,6 +23,7 @@ Singleton {
         } else {
             recognizeMusicProc.running = !root.running
         }
+        if (recognizeMusicProc.running) root.notifyListening()
         musicReconizedProc.running = false
     }
 
@@ -43,6 +44,16 @@ Singleton {
     readonly property string monitorSourceString: monitorSourceToString(monitorSource)
     property var recognizedTrack: ({ title:"", subtitle:"", url:""})
     property bool manuallyStopped: false
+
+    function notifyListening() {
+        Quickshell.execDetached([
+            "notify-send",
+            Translation.tr("Listening for music"),
+            root.monitorSource === SongRec.MonitorSource.Monitor ? Translation.tr("Using system audio") : Translation.tr("Using microphone"),
+            "-a",
+            "Shell"
+        ])
+    }
 
     function handleRecognition(jsonText) {
         try {

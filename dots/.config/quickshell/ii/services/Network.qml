@@ -6,6 +6,7 @@ pragma ComponentBehavior: Bound
 import Quickshell
 import Quickshell.Io
 import QtQuick
+import qs.modules.common
 import qs.services.network
 
 /**
@@ -34,6 +35,13 @@ Singleton {
 
     property string networkName: ""
     property int networkStrength
+    property real downloadBytesPerSecond: 0
+    property real uploadBytesPerSecond: 0
+    property real totalReceivedBytes: 0
+    property real totalSentBytes: 0
+    property real previousReceivedBytes: 0
+    property real previousSentBytes: 0
+    property real previousThroughputTimestamp: 0
     property string materialSymbol: root.ethernet
         ? "lan"
         : (root.wifiEnabled && root.wifiStatus === "connected")
@@ -82,6 +90,41 @@ Singleton {
 
     function openPublicWifiPortal() {
         Quickshell.execDetached(["xdg-open", "https://nmcheck.gnome.org/"]) // From some StackExchange thread, seems to work
+    }
+
+    function formatRate(bytesPerSecond) {
+        if (bytesPerSecond >= 1024 * 1024)
+            return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MiB/s`;
+        if (bytesPerSecond >= 1024)
+            return `${(bytesPerSecond / 1024).toFixed(1)} KiB/s`;
+        return `${Math.round(bytesPerSecond)} B/s`;
+    }
+
+    function updateThroughput() {
+        const lines = networkDevFile.text().trim().split("\n").slice(2);
+        let received = 0;
+        let sent = 0;
+
+        for (const line of lines) {
+            const parts = line.trim().split(/[:\s]+/);
+            if (parts.length < 17 || parts[0] === "lo")
+                continue;
+            received += Number(parts[1] ?? 0);
+            sent += Number(parts[9] ?? 0);
+        }
+
+        const now = Date.now();
+        if (previousThroughputTimestamp > 0) {
+            const seconds = Math.max((now - previousThroughputTimestamp) / 1000, 0.001);
+            downloadBytesPerSecond = Math.max((received - previousReceivedBytes) / seconds, 0);
+            uploadBytesPerSecond = Math.max((sent - previousSentBytes) / seconds, 0);
+        }
+
+        totalReceivedBytes = received;
+        totalSentBytes = sent;
+        previousReceivedBytes = received;
+        previousSentBytes = sent;
+        previousThroughputTimestamp = now;
     }
 
     function changePassword(network: WifiAccessPoint, password: string, username = ""): void {
@@ -328,5 +371,24 @@ Singleton {
         id: apComp
 
         WifiAccessPoint {}
+    }
+
+    Timer {
+        interval: Config.options?.resources?.updateInterval ?? 3000
+        running: true
+        repeat: true
+        onTriggered: {
+            networkDevFile.reload();
+            root.updateThroughput();
+        }
+        Component.onCompleted: {
+            networkDevFile.reload();
+            root.updateThroughput();
+        }
+    }
+
+    FileView {
+        id: networkDevFile
+        path: "/proc/net/dev"
     }
 }
