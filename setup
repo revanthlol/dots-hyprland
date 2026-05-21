@@ -70,14 +70,13 @@ case ${SUBCMD_NAME} in
     for function in ${print_os_group_id_functions[@]}; do
       $function
     done
-    pause
+    if [[ "${SKIP_ALLGREETING}" != true ]]; then
+      source ${SUBCMD_DIR}/0.greeting.sh
+    fi
     # Initialize sudo keepalive for the entire install process
     sudo_init_keepalive
     # Set trap to cleanup when this subcommand exits
     trap sudo_stop_keepalive EXIT INT TERM
-    if [[ "${SKIP_ALLGREETING}" != true ]]; then
-      source ${SUBCMD_DIR}/0.greeting.sh
-    fi
     if [[ "${SKIP_ALLDEPS}" != true ]]; then
       source ${SUBCMD_DIR}/1.deps-router.sh
     fi

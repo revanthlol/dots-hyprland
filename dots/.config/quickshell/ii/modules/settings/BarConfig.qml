@@ -85,6 +85,32 @@ ContentPage {
         }
 
         ConfigRow {
+            ContentSubsection {
+                title: Translation.tr("Bar width")
+                Layout.fillWidth: true
+
+                ConfigSelectionArray {
+                    currentValue: Config.options.bar.fullWidth
+                    onSelected: newValue => {
+                        Config.options.bar.fullWidth = newValue;
+                    }
+                    options: [
+                        {
+                            displayName: Translation.tr("Compact"),
+                            icon: "center_focus_strong",
+                            value: false
+                        },
+                        {
+                            displayName: Translation.tr("Edge-to-edge"),
+                            icon: "width_full",
+                            value: true
+                        }
+                    ]
+                }
+            }
+        }
+
+        ConfigRow {
             
             ContentSubsection {
                 title: Translation.tr("Corner style")

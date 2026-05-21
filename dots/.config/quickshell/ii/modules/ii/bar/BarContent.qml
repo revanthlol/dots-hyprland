@@ -10,7 +10,11 @@ import qs.modules.common.functions
 
 Item { // Bar content region
     id: root
+    readonly property bool fullWidth: Config.options.bar.fullWidth
     implicitWidth: mainRow.implicitWidth
+    implicitHeight: Appearance.sizes.barHeight
+    width: fullWidth ? (parent?.width ?? implicitWidth) : implicitWidth
+    height: implicitHeight
 
     property var screen: root.QsWindow.window?.screen
     property var brightnessMonitor: Brightness.getMonitorForScreen(screen)
@@ -49,7 +53,11 @@ Item { // Bar content region
 
     RowLayout {
         id: mainRow
-        anchors.centerIn: parent
+        anchors {
+            verticalCenter: parent.verticalCenter
+            horizontalCenter: parent.horizontalCenter
+        }
+        width: root.fullWidth ? parent.width : implicitWidth
         spacing: 8
 
         Item { Layout.preferredWidth: 4 } // Padding: 4 (width) + 8 (spacing) = 12px
@@ -65,6 +73,11 @@ Item { // Bar content region
             Resources {
                 Layout.alignment: Qt.AlignVCenter
             }
+        }
+
+        Item {
+            visible: root.fullWidth
+            Layout.fillWidth: true
         }
 
         // Center - workspaces
@@ -86,6 +99,11 @@ Item { // Bar content region
             }
         }
 
+        Item {
+            visible: root.fullWidth
+            Layout.fillWidth: true
+        }
+
         // Right
         RowLayout {
             spacing: 10
@@ -101,6 +119,11 @@ Item { // Bar content region
             }
             BatteryIndicator {
                 visible: Battery.available
+                Layout.alignment: Qt.AlignVCenter
+                Layout.leftMargin: 4
+            }
+            UtilButtons {
+                visible: Config.options.bar.verbose
                 Layout.alignment: Qt.AlignVCenter
                 Layout.leftMargin: 4
             }

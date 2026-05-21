@@ -119,33 +119,16 @@ Scope {
                         implicitHeight: Appearance.sizes.barHeight
                         anchors {
                             horizontalCenter: parent.horizontalCenter
-                            top: parent.top
-                            bottom: undefined
-                            topMargin: (Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
+                            top: Config.options.bar.bottom ? undefined : parent.top
+                            bottom: Config.options.bar.bottom ? parent.bottom : undefined
+                            topMargin: (!Config.options.bar.bottom && Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
+                            bottomMargin: (Config.options.bar.bottom && Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
                         }
                         Behavior on anchors.topMargin {
                             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
                         }
                         Behavior on anchors.bottomMargin {
                             animation: Appearance.animation.elementMoveFast.numberAnimation.createObject(this)
-                        }
-
-                        states: State {
-                            name: "bottom"
-                            when: Config.options.bar.bottom
-                            AnchorChanges {
-                                target: barContent
-                                anchors {
-                                    horizontalCenter: parent.horizontalCenter
-                                    top: undefined
-                                    bottom: parent.bottom
-                                }
-                            }
-                            PropertyChanges {
-                                target: barContent
-                                anchors.topMargin: 0
-                                anchors.bottomMargin: (Config?.options.bar.autoHide.enable && !mustShow) ? -Appearance.sizes.barHeight : 0
-                            }
                         }
                     }
 
