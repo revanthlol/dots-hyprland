@@ -24,6 +24,7 @@ hl.bind("SUPER + Tab", hl.dsp.global("quickshell:overviewWorkspacesToggle"), { d
 hl.bind("SUPER + V", hl.dsp.global("quickshell:overviewClipboardToggle"))
 hl.bind("SUPER + Period", hl.dsp.global("quickshell:overviewEmojiToggle"))
 hl.bind("SUPER + A", hl.dsp.global("quickshell:dashboardToggle"), { description = "Shell: Toggle dashboard" })
+hl.bind("SUPER + SPACE", hl.dsp.exec_cmd(qsIpcCall .. " quickLauncher toggle"), { description = "Shell: Toggle quick launcher" })
 hl.bind("SUPER + ALT + A", hl.dsp.global("quickshell:sidebarLeftToggleDetach"))
 hl.bind("SUPER + B", hl.dsp.global("quickshell:sidebarLeftToggle"))
 hl.bind("SUPER + O", hl.dsp.global("quickshell:sidebarLeftToggle"))

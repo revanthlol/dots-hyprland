@@ -5,3 +5,13 @@
 
 -- Input method
 -- hl.exec_cmd("fcitx5")
+hl.on("hyprland.start", function()
+
+-- startup apps
+hl.exec_cmd("vesktop")
+
+-- custom lua startup scripts
+require("custom.scripts.mpv")
+require("custom.scripts.kitty")
+
+end)

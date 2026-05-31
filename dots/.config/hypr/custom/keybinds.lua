@@ -7,7 +7,7 @@ hl.bind("CTRL + SUPER + ALT + Slash", hl.dsp.exec_cmd("xdg-open ~/.config/hypr/c
     { description = "Edit extra keybinds" })
 
 -- Launcher
-hl.bind("SUPER + Space", hl.dsp.exec_cmd("pkill fuzzel || fuzzel"), { description = "App launcher" })
+-- hl.bind("SUPER + Space", hl.dsp.exec_cmd("pkill fuzzel || fuzzel"), { description = "App launcher" })
 
 -- Audio and brightness
 hl.bind("ALT + X", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%+"),

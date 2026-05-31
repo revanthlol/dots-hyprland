@@ -20,17 +20,16 @@ RippleButton {
     colBackgroundToggled: Appearance.colors.colSecondaryContainer
     colBackgroundToggledHover: Appearance.colors.colSecondaryContainerHover
     colRippleToggled: Appearance.colors.colSecondaryContainerActive
-    toggled: GlobalStates.dashboardOpen
+    toggled: GlobalStates.quickLauncherOpen
 
     onPressed: {
-        // Placeholder launcher hook. Keep the button wired while the target action is undecided.
-        console.log("Arch launcher placeholder clicked");
+        GlobalStates.quickLauncherOpen = !GlobalStates.quickLauncherOpen;
     }
 
 
     Connections {
         target: GlobalStates
-        function onDashboardOpenChanged() {
+        function onQuickLauncherOpenChanged() {
             root.showPing = false;
         }
     }

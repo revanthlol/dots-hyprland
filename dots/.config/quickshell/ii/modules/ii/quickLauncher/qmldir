@@ -1,0 +1,8 @@
+module qs.modules.ii.quickLauncher
+QuickLauncher   1.0 QuickLauncher.qml
+SystemInfoPane  1.0 SystemInfoPane.qml
+StatRow         1.0 StatRow.qml
+MiniPlayer      1.0 MiniPlayer.qml
+AppListPane     1.0 AppListPane.qml
+LauncherAppRow  1.0 LauncherAppRow.qml
+LauncherAppTile 1.0 LauncherAppTile.qml
